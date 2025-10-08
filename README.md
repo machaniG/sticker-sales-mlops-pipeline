@@ -15,26 +15,40 @@ This project demonstrates data cleaning, feature engineering, model training, ev
 ## Folder Structure
 
 sticker-sales-mlops-pipeline/
+
 │
 ├── data/ # Contains raw and processed datasets
+
 │ ├── raw/ # Unmodified input data
+
 │ └── processed/ # Cleaned and feature-engineered data
 │
+
 ├── scripts/ # All Python scripts
+
 │ ├── etl.py # Data cleaning, transformation, feature creation
+
 │ └── train.py # Model training, evaluation, and saving artifacts
 │
 ├── artifacts/ # Trained models and evaluation metrics
+
 │ └── .gitkeep
 │
+
 ├── logs/ # Log files for pipeline runs
+
 │ └── .gitkeep
 │
+
 ├── .github/workflows/ # GitHub Actions automation workflow
+
 │ └── ml_pipeline.yml
 │
+
 ├── requirements.txt # Python dependencies
+
 ├── .gitignore # Ignored files/folders (data, logs, artifacts)
+
 └── README.md # Project documentation
 
 ---
