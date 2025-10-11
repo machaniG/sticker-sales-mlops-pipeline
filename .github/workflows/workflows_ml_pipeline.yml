@@ -34,11 +34,11 @@ jobs:
 
       - name: Run ETL
         run: python scripts/etl1.py
-        working-directory: sticker-sales-mlops-pipeline
+        working-directory: .
 
       - name: Train model
         run: python scripts/train1.py
-        working-directory: sticker-sales-mlops-pipeline
+        working-directory: .
         
       - name: Upload logs
         if: always()
