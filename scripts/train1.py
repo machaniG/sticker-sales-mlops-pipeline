@@ -71,6 +71,8 @@ MODELS = {
 }
 
 
+
+
 def prepare_features(df):
     # Identify numeric and categorical columns
 
@@ -117,6 +119,7 @@ def evaluate_model(model, X_val, y_val):
 # training models
 def run_training():
     df = pd.read_csv(PROCESSED_PATH)
+    logger.info(f"Columns in processed dataset: {list(df.columns)}")
     X_train, y_train, X_val, y_val, preprocessor = prepare_features(df)
 
     pipelines = build_models(preprocessor)
