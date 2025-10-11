@@ -16,11 +16,12 @@ import os
 
 # === Paths ===
 RAW_PATH = Path("data/raw/sticker_sales.csv")       # Input dataset
-PROCESSED_PATH = Path("processed/cleaned.csv")  # Output dataset
+PROCESSED_PATH = Path("processed/cleaned.csv")      # Output dataset
 PROCESSED_PATH.parent.mkdir(parents=True, exist_ok=True)
 
-# Ensure logs directory exists
+# Ensure necessary directories exist
 RAW_PATH.parent.mkdir(parents=True, exist_ok=True)
+Path("logs").mkdir(parents=True, exist_ok=True)
 
 # Then configure logging
 # Basic logging configuration
