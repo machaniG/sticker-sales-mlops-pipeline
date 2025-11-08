@@ -1,0 +1,13 @@
+name: Debug Docker Info
+on: [push]
+
+jobs:
+  debug:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Check Docker login
+        run: docker info
+ 
