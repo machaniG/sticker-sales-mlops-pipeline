@@ -25,6 +25,7 @@ jobs:
 
       - name: Run unit and integration tests
         run: |
+          mkdir -p logs
           export PYTHONPATH="${PYTHONPATH}:$(pwd)"
           pytest --maxfail=2 --disable-warnings
 

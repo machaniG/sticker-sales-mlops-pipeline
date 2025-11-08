@@ -1,6 +1,7 @@
 """
 FastAPI application for serving the sticker sales prediction model.
 """
+import os
 from fastapi import FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
@@ -15,16 +16,23 @@ from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import RequestValidationError
 from fastapi import status
 
+# Ensure the logs directory exists
+os.makedirs("logs", exist_ok=True)
+
 # Configure logging
+log_file = os.path.join("logs", "api.log")
+
 logging.basicConfig(
     level=logging.INFO,
-    format="%(asctime)s - %(levelname)s - %(message)s",
+    format="%(asctime)s | %(levelname)s | %(name)s | %(message)s",
     handlers=[
-        logging.FileHandler("logs/api.log"),
+        logging.FileHandler(log_file, mode='a', encoding='utf-8'),
         logging.StreamHandler()
     ]
 )
+
 logger = logging.getLogger(__name__)
+logger.info("Logging initialized successfully.")
 
 # Initialize FastAPI app
 app = FastAPI(
