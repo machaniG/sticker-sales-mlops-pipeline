@@ -4,8 +4,8 @@ API Wrapper Module (scripts/api.py)
 This file aggregates core functions (like feature preparation and model loading)
 and is primarily used by unit tests to maintain a clean import structure.
 """
-from scripts.train1 import prepare_features
-from scripts.predict import load_production_model as load_model
+from .train1 import prepare_features
+from .predict import load_production_model as load_model
 # NOTE: We now import the load_production_model function from predict.py 
 # as the 'load_model' reference for testing purposes.
 

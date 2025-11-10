@@ -7,7 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.metrics import mean_absolute_percentage_error
-from scripts.inference_transformer import FeatureEnrichmentTransformer # NEW IMPORT!
+from .inference_transformer import FeatureEnrichmentTransformer # NEW IMPORT!
 
 import logging
 import mlflow

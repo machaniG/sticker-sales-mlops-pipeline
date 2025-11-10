@@ -16,7 +16,7 @@ from fastapi.responses import JSONResponse
 from fastapi.exception_handlers import RequestValidationError
 from fastapi import status
 # Import the custom transformer (required to load the pipeline)
-from scripts.inference_transformer import FeatureEnrichmentTransformer 
+from .inference_transformer import FeatureEnrichmentTransformer 
 
 
 # Ensure the logs directory exists
