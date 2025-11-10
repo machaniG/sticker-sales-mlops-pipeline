@@ -4,7 +4,7 @@ Custom Scikit-learn Transformer that encapsulates ALL feature engineering logic
 This guarantees training-serving feature consistency.
 """
 import pandas as pd
-import numpy as np
+import numpy as np # Must be imported for np.int64 casting
 import holidays
 import wbgapi as wb
 import logging
@@ -31,7 +31,7 @@ def _fetch_gdp_data(df, indicator="NY.GDP.PCAP.CD"):
     years = range(min_year, max_year + 1)
     
     # Format years for WB API call
-    time_filter = ";".join([f"YR{y}" for y in years])
+    time_filter_str = ";".join([f"YR{y}" for y in years])
 
     # Attempt to use the country names directly
     country_filter = country_codes if country_codes else 'all'
@@ -39,13 +39,12 @@ def _fetch_gdp_data(df, indicator="NY.GDP.PCAP.CD"):
     logger.info(f"🌍 Fetching GDP data for {len(country_codes)} countries and years {min_year}-{max_year}...")
 
     try:
-        # Fetch data. Removed 'numeric_times=True' as it caused a warning in the logs.
+        # Fetch data. Removed 'time_filter' argument as it was causing the latest warning.
         df_gdp_wide = wb.data.DataFrame(
             indicator, 
             country_filter, 
-            time=time_filter, 
-            columns='series', # Ensure columns are indicator series
-            time_filter=time_filter
+            time=time_filter_str, # Use the string variable for the 'time' argument
+            columns='series', 
         )
         
         # WBGAPI returns a complex index/column structure. Simplify it.
@@ -64,7 +63,7 @@ def _fetch_gdp_data(df, indicator="NY.GDP.PCAP.CD"):
         # Keep only the required columns and ensure types match
         df_gdp = df_gdp[["country", "year", "gdp_per_capita"]]
         # Ensure year is an integer type, though it might come as string (e.g., 'YR2015') from the API
-        df_gdp["year"] = df_gdp["year"].astype(str).str.replace('YR', '').astype(int)
+        df_gdp["year"] = df_gdp["year"].astype(str).str.replace('YR', '').astype(np.int64) # Ensure int64
         
         logger.info(f"✅ Successfully fetched GDP data for {len(df_gdp['country'].unique())} countries.")
         return df_gdp
@@ -105,12 +104,12 @@ class FeatureEnrichmentTransformer(BaseEstimator, TransformerMixin):
         X_fit = X.copy()
         
         # Ensure date is datetime type
-        # Check for dtype to avoid erroring out if the column is already datetime
         if not pd.api.types.is_datetime64_any_dtype(X_fit["date"]):
              X_fit["date"] = pd.to_datetime(X_fit["date"], errors="coerce")
         
         # 1️⃣ Time-based Features (Needed for subsequent steps like GDP)
-        X_fit["year"] = X_fit["date"].dt.year # Ensure 'year' is present
+        # FIX: Explicitly cast to np.int64 to match unit test
+        X_fit["year"] = X_fit["date"].dt.year.astype(np.int64) 
         
         # --- Lag and Rolling Features for Median Capture ---
         X_fit = X_fit.sort_values(["country", "store", "product", "date"])
@@ -149,14 +148,14 @@ class FeatureEnrichmentTransformer(BaseEstimator, TransformerMixin):
         X_transformed["date"] = pd.to_datetime(X_transformed["date"], errors="coerce")
         
         # 1️⃣ Time-based Features
-        X_transformed["year"] = X_transformed["date"].dt.year
+        # FIX: Explicitly cast to np.int64 to match unit test
+        X_transformed["year"] = X_transformed["date"].dt.year.astype(np.int64) 
         X_transformed["month"] = X_transformed["date"].dt.month
         X_transformed["day"] = X_transformed["date"].dt.day
-        # FIX: Renamed 'weekday' to 'dayofweek' to match unit test
         X_transformed["dayofweek"] = X_transformed["date"].dt.dayofweek 
         
         # The .dt.isocalendar().week returns a non-integer Series in recent pandas, so ensure conversion
-        X_transformed["weekofyear"] = X_transformed["date"].dt.isocalendar().week.astype(int)
+        X_transformed["weekofyear"] = X_transformed["date"].dt.isocalendar().week.astype(np.int64)
         
         # 2️⃣ Holiday Features
         X_transformed["is_holiday"] = X_transformed.apply(self._is_holiday, axis=1)

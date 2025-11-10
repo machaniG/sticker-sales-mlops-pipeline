@@ -1,64 +1,62 @@
-# CI/CD Pipeline for ML Project
-name: CI/CD Pipeline
+# This workflow runs the CI/CD pipeline:
+# 1. Runs the ETL script.
+# 2. Runs unit tests.
+# 3. Trains the model and registers the best version to MLflow.
 
-# Trigger on pushes and pull requests to the main branch
+name: ⚙️ CI Pipeline: Build, Test, Train
+
+# ----------------------------------------------------
+# ❗ REQUIRED FOR REUSABILITY ❗
+# This allows this workflow to be called by the orchestrator.
+# It defines what inputs and secrets it expects.
+# ----------------------------------------------------
 on:
+  workflow_call:
+    inputs:
+      commit_sha:
+        description: 'Git commit SHA for MLflow tracking'
+        type: string
+        required: true
+    secrets:
+      MLFLOW_TRACKING_URI:
+        required: true
+# ----------------------------------------------------
+
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
-  # Allow manual trigger
-  workflow_dispatch:
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
 
 jobs:
-  test_and_build:
+  ci:
+    name: Run CI Steps
     runs-on: ubuntu-latest
+
+    # Use secrets passed from the calling workflow (orchestrator)
+    env:
+      MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+
     steps:
-      - name: ⬇️ Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: 🐍 Set up Python
-        uses: actions/setup-python@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
+          cache: 'pip'
 
-      - name: ⚙️ Install dependencies
-        run: |
-          # Install core dependencies and testing tools (from requirements.txt)
-          pip install --upgrade pip
-          pip install -r requirements.txt
-          # Also install shap for the training script's artifact generation
-          pip install matplotlib shap
+      - name: Install dependencies
+        run: pip install -r requirements.txt
 
-      - name: 🛠️ Prepare directories for testing
-        # Essential step: All scripts (etl1.py, train1.py, logging) need these paths to exist
-        run: |
-          mkdir -p data/raw processed artifacts logs
+      - name: 🛠️ Run ETL (Data Preprocessing)
+        run: python etl.py
+        
+      - name: 🧪 Run Unit Tests
+        run: pytest tests/
 
-      - name: 🔬 Run Unit Tests (Pytest)
-        # Tests individual functions (e.g., feature transformers)
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "Running unit tests..."
-          pytest tests/test_core_unit.py
-
-      - name: 🧪 Run Integration Tests (FastAPI + Model)
-        # Tests the overall system, including API endpoint functionality
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "Running API integration tests..."
-          pytest tests/test_api_integration.py
-          
-      - name: 🏃 Run Full Training Pipeline Test
-        # Confirms the training script runs without error and registers a model artifact
-        env:
-          PYTHONPATH: ${{ github.workspace }}
-        run: |
-          echo "Testing if the training script runs successfully and logs a model..."
-          python scripts/train1.py
-
-      # --- Optional Deployment Steps would follow here ---
+      - name: 🤖 Run Model Training (MLflow Tracking)
+        # Use the input parameter 'commit_sha' provided by the calling workflow
+        run: python train.py ${{ inputs.commit_sha }}
