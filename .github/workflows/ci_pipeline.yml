@@ -1,16 +1,7 @@
-# This workflow runs the CI/CD pipeline:
-# 1. Runs the ETL script.
-# 2. Runs unit tests.
-# 3. Trains the model and registers the best version to MLflow.
+name: CI Pipeline; Build, Test, Train
 
-name: ⚙️ CI Pipeline: Build, Test, Train
-
-# ----------------------------------------------------
-# ❗ REQUIRED FOR REUSABILITY ❗
-# This allows this workflow to be called by the orchestrator.
-# It defines what inputs and secrets it expects.
-# ----------------------------------------------------
 on:
+  # This section allows the workflow to be called as a reusable workflow (by mlops_orchestrator.yml)
   workflow_call:
     inputs:
       commit_sha:
@@ -20,8 +11,7 @@ on:
     secrets:
       MLFLOW_TRACKING_URI:
         required: true
-# ----------------------------------------------------
-
+  # This section allows the workflow to run on direct code pushes to main
   push:
     branches:
       - main
