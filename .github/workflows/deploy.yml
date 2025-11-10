@@ -1,63 +1,52 @@
-name: Build and Push Docker Image
+# This reusable workflow handles building the FastAPI application Docker image
+# and pushing it to Docker Hub, relying only on the MLflow Tracking URI for model access.
+
+name: 🐳 Docker Deployment
 
 on:
-  # Changed from push/workflow_dispatch to workflow_call
   workflow_call:
-    secrets:
-      DOCKERHUB_USERNAME:
-        required: true
-      DOCKERHUB_TOKEN:
-        required: true
     inputs:
-      # Optional input: allows the orchestrator to pass a specific tag (e.g., model version) 
-      # if the default run number tag is not desired.
-      deploy_tag_suffix:
-        required: false
+      image_name:
+        description: 'The name for the Docker image (e.g., my-project-api)'
         type: string
-        default: '' # Default to empty, which triggers the use of the run number
+        required: true
+    secrets:
+      MLFLOW_TRACKING_URI:
+        required: true
+      DOCKER_USERNAME:
+        required: true
+      DOCKER_PASSWORD:
+        required: true
 
 jobs:
-  build-and-push:
+  build_and_push:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
-
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-
-      - name: Log in to Docker Hub
+        
+      - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Set image tags
+      - name: Get Short SHA
         id: vars
-        run: |
-          # Use run number as the default version tag
-          RUN_TAG="v${{ github.run_number }}"
-          
-          # Use the deploy_tag_suffix input if provided, otherwise use the run tag
-          TAG_SUFFIX="${{ inputs.deploy_tag_suffix }}"
-          
-          if [ -z "$TAG_SUFFIX" ]; then
-            TAG_SUFFIX="$RUN_TAG"
-          fi
-          
-          echo "tag_suffix=$TAG_SUFFIX" >> $GITHUB_OUTPUT
-          echo "date_tag=$(date +'%Y%m%d')" >> $GITHUB_OUTPUT
+        run: echo "sha_short=$(echo ${{ github.sha }} | cut -c1-8)" >> $GITHUB_OUTPUT
 
-      - name: Build and push Docker image
+      - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ./Dockerfile
+          file: ./Dockerfile # Assuming Dockerfile is in the root
           push: true
           tags: |
-            ${{ secrets.DOCKERHUB_USERNAME }}/sticker-sales-mlops:latest
-            ${{ secrets.DOCKERHUB_USERNAME }}/sticker-sales-mlops:${{ steps.vars.outputs.date_tag }}
-            ${{ secrets.DOCKERHUB_USERNAME }}/sticker-sales-mlops:${{ steps.vars.outputs.tag_suffix }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}:latest
+            ${{ secrets.DOCKER_USERNAME }}/${{ inputs.image_name }}:${{ steps.vars.outputs.sha_short }}
+          build-args: |
+            # Pass only the MLFLOW_TRACKING_URI
+            MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}

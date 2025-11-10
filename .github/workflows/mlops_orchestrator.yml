@@ -1,0 +1,76 @@
+# This is the master orchestrator workflow for the MLOps pipeline.
+# It chains together the CI/CD pipeline, model promotion, and Docker deployment.
+
+name: 🤖 Master MLOps Orchestrator
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual execution'
+        required: false
+        default: 'Manual run to test MLOps pipeline'
+
+env:
+  # Set a common MLflow Tracking URI for all jobs
+  MLFLOW_TRACKING_URI: ${{ secrets.MLFLOW_TRACKING_URI }}
+  DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+  DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+  DOCKER_IMAGE_NAME: stickersales-api
+
+jobs:
+  # --- STEP 1: CI/CD Pipeline (Build, Test, and Register) ---
+  ci_cd_pipeline:
+    name: Build, Test, and Register Model
+    # Uses a separate, reusable workflow
+    uses: ./.github/workflows/ci_pipeline.yml
+    with:
+      commit_sha: ${{ github.sha }}
+    secrets:
+      # Only pass the tracking URI
+      MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+
+  # --- STEP 2: Model Promotion (Stage to Production) ---
+  model_promotion:
+    name: Promote Model to Production
+    needs: ci_cd_pipeline
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+        
+      - name: Run Model Promotion Script (promote_model.py)
+        # This script uses the MlflowClient to transition the latest model to 'Production'
+        run: python promote_model.py
+        env:
+          MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+
+  # --- STEP 3: Docker Image Deployment ---
+  docker_deployment:
+    name: Build & Push Docker Image
+    # This job runs only after the model has been successfully promoted to Production
+    needs: model_promotion
+    uses: ./.github/workflows/deploy.yml
+    with:
+      image_name: ${{ env.DOCKER_IMAGE_NAME }}
+    secrets:
+      # Only pass necessary secrets: MLflow URI and Docker credentials
+      MLFLOW_TRACKING_URI: ${{ env.MLFLOW_TRACKING_URI }}
+      DOCKER_USERNAME: ${{ env.DOCKER_USERNAME }}
+      DOCKER_PASSWORD: ${{ env.DOCKER_PASSWORD }}

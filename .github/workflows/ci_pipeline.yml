@@ -1,0 +1,64 @@
+# CI/CD Pipeline for ML Project
+name: CI/CD Pipeline
+
+# Trigger on pushes and pull requests to the main branch
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test_and_build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: ⚙️ Install dependencies
+        run: |
+          # Install core dependencies and testing tools (from requirements.txt)
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          # Also install shap for the training script's artifact generation
+          pip install matplotlib shap
+
+      - name: 🛠️ Prepare directories for testing
+        # Essential step: All scripts (etl1.py, train1.py, logging) need these paths to exist
+        run: |
+          mkdir -p data/raw processed artifacts logs
+
+      - name: 🔬 Run Unit Tests (Pytest)
+        # Tests individual functions (e.g., feature transformers)
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "Running unit tests..."
+          pytest tests/test_core_unit.py
+
+      - name: 🧪 Run Integration Tests (FastAPI + Model)
+        # Tests the overall system, including API endpoint functionality
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "Running API integration tests..."
+          pytest tests/test_api_integration.py
+          
+      - name: 🏃 Run Full Training Pipeline Test
+        # Confirms the training script runs without error and registers a model artifact
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "Testing if the training script runs successfully and logs a model..."
+          python scripts/train1.py
+
+      # --- Optional Deployment Steps would follow here ---

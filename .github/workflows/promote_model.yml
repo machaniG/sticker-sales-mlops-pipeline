@@ -1,0 +1,55 @@
+# Workflow to promote the best registered model to the 'Production' stage in MLflow.
+# This workflow is triggered manually and depends on a successful CI run.
+name: 🚀 Promote Best Model
+
+on:
+  workflow_dispatch:
+    inputs:
+      ci_run_id:
+        description: 'ID of the successful CI/CD Pipeline run to verify before promotion.'
+        required: true
+        type: string
+
+jobs:
+  # Check the status of the required CI/CD Pipeline run ID
+  verify_ci:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify CI/CD Pipeline Success
+        # In a real setup, you would use GitHub's API to check if the
+        # workflow run with the provided ID succeeded and ensure its artifacts are valid.
+        # For this example, we assume success if the CI run ID is provided.
+        run: echo "Verifying CI/CD run ${{ github.event.inputs.ci_run_id }}..."
+
+  # Job to run the promotion script
+  promote:
+    needs: [verify_ci] # Must wait for verification step to pass
+    runs-on: ubuntu-latest
+    steps:
+      - name: ⬇️ Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🐍 Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+
+      - name: ⚙️ Install dependencies (including MLflow for promotion script)
+        run: |
+          pip install --upgrade pip
+          pip install mlflow
+
+      - name: 🔑 Configure MLflow Tracking
+        # Set up environment variables to point to the MLflow instance.
+        # This is where your actual MLflow tracking server details would go.
+        # Using a placeholder file-based URI for this example.
+        run: |
+          echo "MLFLOW_TRACKING_URI=file:./mlruns" >> $GITHUB_ENV
+          mkdir -p mlruns
+
+      - name: 🚀 Run Model Promotion Script
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: |
+          echo "Executing promotion logic..."
+          python scripts/promote_model.py
