@@ -1,7 +1,8 @@
 name: CI Pipeline; Build, Test, Train
 
 on:
-  # This section allows the workflow to be called as a reusable workflow (by mlops_orchestrator.yml)
+  # Note: The MLFLOW_TRACKING_URI secret is no longer needed here,
+  # but we keep the commit_sha input required for the script.
   workflow_call:
     inputs:
       commit_sha:
@@ -9,8 +10,10 @@ on:
         type: string
         required: true
     secrets:
+      # This secret is unused until you deploy the external server
       MLFLOW_TRACKING_URI:
-        required: true
+        required: false # Changed to false or deleted to allow CI to run
+
   # This section allows the workflow to run on direct code pushes to main
   push:
     branches:
@@ -43,11 +46,15 @@ jobs:
       - name: 🧪 Run Unit Tests
         run: pytest tests/
 
-      - name: 🤖 Run Model Training (MLflow Tracking)
-        # Use secrets passed from the calling workflow (orchestrator)  
+      - name: 🤖 Run Model Training (Local File Tracking)
+        # 🟢 FIX: We are setting the MLFLOW_TRACKING_URI to a local file path
+        # to ensure the script does not try to connect to 127.0.0.1 or an external server.
         run: |
-          # 1. EXPORT: Set the environment variable explicitly in the shell context
-          export MLFLOW_TRACKING_URI=${{ secrets.MLFLOW_TRACKING_URI }}
+          # 1. Create the local directory that MLflow will use
+          mkdir -p mlruns
           
-          # 2. RUN: Execute the Python module
+          # 2. Export the URI as a local file path (This is key)
+          export MLFLOW_TRACKING_URI=file:./mlruns
+          
+          # 3. Run the training script, which now uses the local path
           python -m scripts.train1 ${{ inputs.commit_sha }}

@@ -1,26 +1,55 @@
 version: '3.8'
 
 services:
-  api:
+  # 1. The PostgreSQL Database service - Stores all metadata (metrics, params, run details)
+  postgres:
+    image: postgres:15-alpine
+    container_name: mlflow_postgres_db
+    restart: always
+    environment:
+      # These credentials are used by the MLflow server to connect
+      POSTGRES_USER: mlflow_user
+      POSTGRES_PASSWORD: ${MLFLOW_DB_PASSWORD} # Reads from your .env file
+      POSTGRES_DB: mlflow_tracking_db
+    volumes:
+      # Ensures database data is saved persistently
+      - postgres_data:/var/lib/postgresql/data
+
+  # 2. The MLflow Tracking Server service
+  mlflow:
+    # Use the official MLflow image
+    image: mlflow/mlflow:latest
+    ports:
+      # Exposes the MLflow UI
+      - "5001:5001"
+    environment:
+      # 1. Backend Store URI: Connects to the 'postgres' service internally via its hostname
+      MLFLOW_TRACKING_URI: postgresql://mlflow_user:${MLFLOW_DB_PASSWORD}@postgres:5432/mlflow_tracking_db
+      
+      # 2. Artifact Root: CRITICAL - Replace with your cloud bucket path (e.g., s3://...)
+      MLFLOW_DEFAULT_ARTIFACT_ROOT: ${MLFLOW_ARTIFACT_ROOT}
+
+    command: mlflow server --host 0.0.0.0 --port 5001
+    depends_on:
+      - postgres # MLflow must wait for Postgres to be ready
+
+  # 3. Your Model Serving Application (Uses serving_app.py)
+  serving:
+    # Builds your custom image from the Dockerfile in the current directory
     build: .
     image: sticker-sales-mlops:latest
     ports:
       - "8000:8000"
     environment:
-      - MLFLOW_TRACKING_URI=http://mlflow:5001
+      # Correctly using the internal service name 'mlflow' for tracking and artifact loading
+      MLFLOW_TRACKING_URI: http://mlflow:5001
     volumes:
       - ./data:/app/data
       - ./artifacts:/app/artifacts
       - ./logs:/app/logs
     depends_on:
-      - mlflow
+      - mlflow # Serving app must wait for MLflow to be ready to load models
 
-  mlflow:
-    image: mlflow/mlflow:latest
-    ports:
-      - "5001:5001"
-    environment:
-      - MLFLOW_TRACKING_URI=http://0.0.0.0:5001
-    volumes:
-      - ./mlruns:/mlflow/mlruns
-    command: mlflow server --backend-store-uri /mlflow/mlruns --host 0.0.0.0 --port 5001
+# Define persistent volumes for the database data
+volumes:
+  postgres_data:
