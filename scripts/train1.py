@@ -1,6 +1,7 @@
 from pathlib import Path
 import pandas as pd
 import joblib
+import numpy as np
 from sklearn.ensemble import RandomForestRegressor
 from xgboost import XGBRegressor
 from sklearn.pipeline import Pipeline
