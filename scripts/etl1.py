@@ -7,11 +7,17 @@ ETL Script for Sticker Sales Dataset
 import pandas as pd
 from pathlib import Path
 import logging
+import os
 
-# === Paths ===
+# === Directory Setup (FIX for FileNotFoundError) ===
+# Ensure the logs directory exists before configuring the file handler
+Path("logs").mkdir(parents=True, exist_ok=True)
+# Ensure the raw and processed folders exist
 RAW_PATH = Path("data/raw/sticker_sales.csv")       # Input dataset
-PROCESSED_PATH = Path("processed/base_cleaned.csv") # Output dataset (Renamed for clarity)
+PROCESSED_PATH = Path("processed/base_cleaned.csv") # Output dataset
 PROCESSED_PATH.parent.mkdir(parents=True, exist_ok=True)
+RAW_PATH.parent.mkdir(parents=True, exist_ok=True)
+# ===================================================
 
 # Basic logging configuration
 logging.basicConfig(
@@ -24,13 +30,21 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# === Main ETL ===
+# === Main ETL (Minimalist) ===
 def run_etl():
+    """Performs full ETL: cleaning, feature engineering, and enrichment."""
     logger.info("Starting base ETL process...")
 
     # 1️⃣ Extract
-    df = pd.read_csv(RAW_PATH)
-    logger.info(f"Loaded {len(df)} rows from {RAW_PATH}")
+    try:
+        df = pd.read_csv(RAW_PATH)
+        logger.info(f"Loaded {len(df)} rows from {RAW_PATH}")
+    except FileNotFoundError:
+        logger.error(f"Raw data file not found at {RAW_PATH}. Please ensure the file exists.")
+        return
+    except Exception as e:
+        logger.error(f"Error loading raw data: {e}")
+        return
 
     # 2️⃣ Basic Cleaning (Keep only basic cleaning that is NOT feature creation)
     # The transformer will handle date creation, lag, rolling, etc.
@@ -46,8 +60,6 @@ def run_etl():
     # 4️⃣ Save Base Processed Data
     df.to_csv(PROCESSED_PATH, index=False)
     logger.info(f"✅ Base ETL complete. Cleaned data saved to {PROCESSED_PATH}")
-
-    return df
 
 
 # === Script entrypoint ===

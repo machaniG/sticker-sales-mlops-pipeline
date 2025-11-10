@@ -57,7 +57,7 @@ jobs:
         
       - name: Run Model Promotion Script (promote_model.py)
         # The script uses the MLFLOW_TRACKING_URI environment variable defined above
-        run: python promote_model.py
+        run: python scripts/promote_model.py
 
   # --- STEP 3: Docker Image Deployment ---
   docker_deployment:
