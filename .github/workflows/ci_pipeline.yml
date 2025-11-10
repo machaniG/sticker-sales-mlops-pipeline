@@ -49,4 +49,4 @@ jobs:
 
       - name: 🤖 Run Model Training (MLflow Tracking)
         # Use the input parameter 'commit_sha' provided by the calling workflow
-        run: python scripts/train1.py ${{ inputs.commit_sha }}
+        run: python -m scripts.train1 ${{ inputs.commit_sha }}
