@@ -17,7 +17,7 @@ tqdm>=4.65
 pyyaml>=6.0
 
 # Model interpretability
-shap==0.45.0
+shap==0.48.0
 
 # Optional model extensions
 lightgbm>=4.0
