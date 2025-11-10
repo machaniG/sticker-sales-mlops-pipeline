@@ -9,17 +9,17 @@ on:
 jobs:
   ci_tests:
     name: 1. Run CI Tests
-    uses: ./.github/workflows/tests.yml@main
+    uses: ./.github/workflows/tests.yml
 
   ml_pipeline:
     name: 2. Run ML Pipeline
     needs: ci_tests
-    uses: ./.github/workflows/pipeline.yml@main
+    uses: ./.github/workflows/pipeline.yml
 
   model_register:
     name: 3. Register Best Model
     needs: ml_pipeline
-    uses: ./.github/workflows/register_model.yml@main
+    uses: ./.github/workflows/register_model.yml
     with:
       pipeline_run_id: ${{ github.run_id }}
     secrets:
@@ -28,7 +28,7 @@ jobs:
   model_deploy:
     name: 4. Deploy Model to Production
     needs: model_register
-    uses: ./.github/workflows/deploy.yml@main
+    uses: ./.github/workflows/deploy.yml
     secrets:
       DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
       DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
