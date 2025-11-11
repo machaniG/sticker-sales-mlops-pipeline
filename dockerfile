@@ -17,7 +17,7 @@ ENV MODEL_NAME=StickerSalesModel
 
 # 2. Copy the application and prediction script.
 #    We assume serving_app.py is in the root directory and uses the script.
-COPY serving_app.py .
+COPY scripts/serving_app.py .
 COPY scripts/predict.py ./scripts/
 
 # Create necessary directories
