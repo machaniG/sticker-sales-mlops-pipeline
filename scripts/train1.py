@@ -9,7 +9,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.compose import ColumnTransformer
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
 from sklearn.metrics import mean_absolute_percentage_error
-from .inference_transformer import FeatureEnrichmentTransformer # NEW IMPORT!
+from .inference_transformer import FeatureEnrichmentTransformer
 
 import logging
 import mlflow
@@ -18,6 +18,7 @@ from datetime import datetime
 import subprocess
 import shap
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 
 # === Directory Setup (FIX for FileNotFoundError) ===
