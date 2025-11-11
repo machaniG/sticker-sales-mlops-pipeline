@@ -37,8 +37,7 @@ This design ensures:
 
 
 ### 🧩 Architecture Overview
-```mermaid
-flowchart LR
+```
     A[Raw Data] --> B[Training (train1.py)]
     B --> C[MLflow Tracking & Model Registry]
     C --> D[CI/CD (GitHub Actions)]
