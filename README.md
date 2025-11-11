@@ -1,91 +1,137 @@
+# 📈 Sticker Sales Forecast Service: Production-Ready MLOps
 
-# Sticker Sales MLOps Pipeline  
+## 🧩 Project Summary & Business Value
 
-An automated end-to-end machine learning pipeline for predicting sticker sales.
-This project demonstrates data cleaning, feature engineering, model training, evaluation, and daily automation using GitHub Actions.
+This project implements an **end-to-end MLOps pipeline** for *real-time sticker sales forecasting*, demonstrating how to operationalize machine learning models as reliable, production-grade microservices.
 
-## Project Overview
-- **ETL:** Cleans and enriches data (adds holiday + GDP features)
-- **Modeling:** Trains XGBoost and Random Forest models
-- **Metrics:** Evaluates performance using MAPE
-- **Automation:** Runs daily with GitHub Actions and uploads model artifacts
+**Objective:**
 
----
+Provide actionable, real-time sales predictions via an API to support **inventory optimization, marketing decisions,** and **revenue forecasting**.
 
-## Folder Structure
+## ⚙️ MLOps Architecture & Tech Stack
 
-sticker-sales-mlops-pipeline/
+The pipeline is fully containerized and automated from model training to CI/CD integration and Docker deployment.
 
-│
-├── data/ # Contains raw and processed datasets
+### 🔁 Core MLOps Principles Demonstrated
 
-│ ├── raw/ # Unmodified input data
+- **Automation:** Automated build, test, and push workflows on every code or data change.
 
-│ └── processed/ # Cleaned and feature-engineered data
-│
+- **Model Governance:** Versioned model registration and tracking via MLflow.
 
-├── scripts/ # All Python scripts
+- **Scalability:** Fast, low-latency inference through FastAPI and Uvicorn.
 
-│ ├── etl.py # Data cleaning, transformation, feature creation
+- **Reproducibility:** End-to-end data, model, and environment version control.
 
-│ └── train.py # Model training, evaluation, and saving artifacts
-│
 
-├── artifacts/ # Trained models and evaluation metrics
+### 🧠 Integrated Feature Engineering & Prediction Pipeline
 
-│ └── .gitkeep
-│
+The deployed model is a **self-contained inference pipeline** that handles both **feature transformation and prediction.**
 
-├── logs/ # Log files for pipeline runs
+You can send *raw input data* (e.g., id, date, country, store, product), and the model automatically applies the full preprocessing logic used during training before generating predictions.
 
-│ └── .gitkeep
-│
+This design ensures:
 
-├── .github/workflows/ # GitHub Actions automation workflow
+- Consistent preprocessing between training and serving
+- Minimal API input requirements
+- Reproducible and scalable predictions
 
-│ └── ml_pipeline.yml
-│
 
-├── requirements.txt # Python dependencies
+### 🧩 Architecture Overview
+```mermaid
+flowchart LR
+    A[Raw Data] --> B[Training (train1.py)]
+    B --> C[MLflow Tracking & Model Registry]
+    C --> D[CI/CD (GitHub Actions)]
+    D --> E[Docker Build & Push]
+    E --> F[FastAPI Serving (serving_app.py)]
+    F --> G[Prediction Endpoint (/predict)]
+```
 
-├── .gitignore # Ignored files/folders (data, logs, artifacts)
+## 🏗️ Models & Tools
 
-└── README.md # Project documentation
+  | Category                | Tools / Libraries      | Highlights                                                                            |
+| ----------------------- | ---------------------- | ------------------------------------------------------------------------------------- |
+| **Data Processing**     | Pandas                 | Robust, widely-used data manipulation library                                         |
+| **Modeling**            | Random Forest, XGBoost | High-performance, ensemble-based forecasting models                                   |
+| **Tracking & Registry** | MLflow                 | Full experiment tracking and model versioning                                         |
+| **Serving Layer**       | FastAPI + Uvicorn      | High-speed, modern REST API for prediction                                            |
+| **Deployment**          | Docker                 | Portable, reproducible service containerization                                       |
+| **CI/CD**               | GitHub Actions         | Automated build, test, and push pipeline                                              |
+| **Orchestration**       | Master Workflow        | Runs weekly and conditionally skips retraining when no code/data changes are detected |
 
----
-## ⚙️ Setup Instructions
 
-### 1. Clone the repository
 
+## 🚀 Quick Start (Local Deployment)
+
+Run the entire prediction service locally in minutes using Docker.
+
+**1. Prerequisites**
+
+Git
+
+Docker
+
+**2. Build and Run the Image (from Docker Hub)**
 ```bash
+# Clone the project
 git clone https://github.com/machaniG/sticker-sales-mlops-pipeline.git
 cd sticker-sales-mlops-pipeline
 
-### 2. Install dependencies
+# Build the Docker image
+docker build -t frida33876/sticker-forecast:v1.0 .
 
-pip install -r requirements.txt
-
-### 3. Run the pipeline manually (optional)
-
-python scripts/etl.py
-python scripts/train.py
+# Run the API service on port 8080
+docker run -d -p 8080:8000 --name sales_predictor frida33876/sticker-forecast:v1.0
 ```
 
-### 4. Automation
+**3. Test the Prediction Endpoint**
 
-The full pipeline runs daily via **GitHub Actions** (.github/workflows/ml_pipeline.yml)
+The API will be available at http://localhost:8080/predict
+ (POST method).
 
-## Tech Stack
+Example Request Body:
+```json
+[
+  { "id": 1, "date": "2025-10-05", "country": "Germany", "store": "Berlin_Alex", "product": "Sticker_A" },
+  { "id": 2, "date": "2025-10-06", "country": "Germany", "store": "Munich_Center", "product": "Sticker_B" }
+]
+```
 
-Python
+## 🔄 Automated Workflows
 
-Pandas, Scikit-learn, XGBoost
+**Master Orchestrator Workflow** (mlops_orchestrator.yml):
 
-WBGAPI, holidays
+- Runs automatically weekly to retrain and redeploy the model.
+- Detects code and data changes but **skips training** if no updates are found.
+- Triggers the **CI/CD pipeline** for build, registration, and Docker push.
 
-GitHub Actions for CI/CD automation
+**CI/CD Pipeline** (ci_pipeline.yml):
 
-## 📊 Author
+- Runs unit tests and model evaluation
+- Registers the best model to MLflow
+- Builds and pushes the Docker image to Docker Hub
 
-**Machani G**  
-[GitHub Profile](https://github.com/machaniG)
+
+## 🧰 Deployment Options
+
+This project is designed for flexible deployment, both locally and in the cloud.
+
+**Local Orchestration**
+
+A docker-compose.yml file is included for easy local service orchestration. For example, to run the ML API, tracking server (MLflow), and supporting components together in one command.
+```bash
+docker-compose up --build
+```
+This approach enables seamless local testing before production deployment.
+
+**Cloud Deployment (AWS-Ready)**
+
+A reusable GitHub Actions workflow (deploy.yml) is included for future AWS deployment.
+Once AWS credentials and infrastructure are configured, the workflow will automatically pull the latest image from Docker Hub and deploy it to an AWS service such as **ECS or ECR**.
+
+
+## 👤 Author
+
+Fridah Machani
+📎 [LinkedIn Profile or Portfolio Link]
+🐳 Docker Hub: frida33876
