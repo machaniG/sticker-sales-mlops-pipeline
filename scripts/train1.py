@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 import pandas as pd
 import joblib
@@ -119,13 +120,10 @@ def run_training(commit):
     """Loads data, trains models, logs results to MLflow, and registers the best model."""
     
     # Ensure MLflow is configured
-    try:
-        if not mlflow.get_tracking_uri():
-             mlflow.set_tracking_uri("file:./mlruns") # Fallback to local
-    except Exception:
-        # Handle cases where tracking URI might not be fully set up
-        mlflow.set_tracking_uri("file:./mlruns")
-
+    # === MLflow Tracking URI Setup (Environment-aware) ===
+    mlflow_uri = os.getenv("MLFLOW_TRACKING_URI", "file:./mlruns")
+    mlflow.set_tracking_uri(mlflow_uri)
+    logger.info(f"Using MLflow Tracking URI: {mlflow_uri}")
     mlflow.set_experiment("Sticker Sales Time Series Forecasting")
     
     with mlflow.start_run() as run:
