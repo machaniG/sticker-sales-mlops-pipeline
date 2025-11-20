@@ -4,9 +4,25 @@
 
 This project implements an **end-to-end MLOps pipeline** for *real-time sticker sales forecasting*, demonstrating how to operationalize machine learning models as reliable, production-grade microservices.
 
+
 **Objective:**
 
 Provide actionable, real-time sales predictions via an API to support **inventory optimization, marketing decisions,** and **revenue forecasting**.
+
+## 📦 Docker Image & Adoption
+
+The Docker image for this project is publicly available on Docker Hub and has already been pulled **60+ times within the first 8 days**, demonstrating early adoption and real-world usability.
+
+<div align="center">
+  <img width="1416" height="653" alt="image_in_dockerhub" src="https://github.com/user-attachments/assets/a2fe706b-940c-4d5e-b352-d1e80d49bae5" />
+
+</div>
+
+You can pull the image via:
+
+```bash
+docker pull frida33876/sticker-sales-mlops:fe1964ce
+```
 
 ## ⚙️ MLOps Architecture & Tech Stack
 
